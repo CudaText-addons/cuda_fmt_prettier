@@ -1,0 +1,26 @@
+[info]
+title=Prettier Formatter
+desc=Format code using Prettier (19 languages: JavaScript, TypeScript, JSON, CSS, HTML, templates, etc.)
+type=cudatext-plugin
+subdir=cuda_fmt_prettier
+homepage=https://github.com/CudaText-addons/cuda_fmt_prettier
+author=Bruno Eduardo
+api=1.0.472
+
+[item1]
+section=commands
+caption=Prettier\Config
+method=config
+menu=o
+
+[item2]
+section=commands
+caption=Prettier\Help
+method=help
+menu=o
+
+[fmt1]
+caption=Prettier
+method=do_format
+lexers=JavaScript,JavaScript Babel,TypeScript,CSS,SCSS,LESS,Sass,HTML,XML,Markdown,JSON,YAML,GraphQL,HTML Handlebars,HTML Laravel Blade,HTML Django DTL,Jinja2,Twig,Svelte
+force_all=1
