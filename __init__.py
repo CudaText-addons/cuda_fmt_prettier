@@ -550,6 +550,5 @@ class Command:
             f"{version_info}"
             "DOCUMENTATION:\n"
             "https://prettier.io/docs/",
-            ct.MB_OK | ct.MB_ICONINFO,
-            "Prettier Help"
+            ct.MB_OK | ct.MB_ICONINFO
         )
