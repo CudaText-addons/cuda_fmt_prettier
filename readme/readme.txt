@@ -1,5 +1,5 @@
 Formatter for CudaFormatter plugin.
-It adds support for 19 languages: JavaScript, TypeScript, JSON, CSS, HTML, templates, and more.
+It adds support for 22 languages: JavaScript, TypeScript, JSON, CSS, HTML, templates, and more.
 It uses "Prettier".
 
 'Prettier' must be in your system PATH, project node_modules, or in the tools/Prettier folder (portable use) inside CudaText directory.
@@ -19,10 +19,11 @@ Access formatting via menu: Plugins > CudaFormatter > Formatter (menu)
 Access help via menu: Options > Settings-plugins > Prettier > Help
 Hotkey (optional): Install 'Configure_Hotkeys' plugin, then search for "CudaFormatter: Formatter (menu)"
 
-Supported languages (19):
-JavaScript, JavaScript Babel (JSX), TypeScript, CSS, SCSS, LESS, Sass,
-HTML, XML, Markdown, JSON, YAML, GraphQL,
-HTML Handlebars, HTML Laravel Blade, HTML Django DTL, Jinja2, Twig, Svelte
+Supported languages (22):
+JavaScript, JavaScript Babel (JSX), TypeScript, CSS, SCSS, LESS,
+HTML, XML, Markdown, MDX, JSON, YAML, GraphQL,
+HTML Handlebars, HTML Laravel Blade, HTML Django DTL, Jinja2, Twig, Svelte,
+Vue, Pug, Jade
 
 Configuration modes:
 1. Project config (recommended): Create .prettierrc in your project root

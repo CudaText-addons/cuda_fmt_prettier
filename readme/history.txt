@@ -1,2 +1,17 @@
+2026.01.01
++ add: support for MDX lexer (parser: mdx)
++ add: support for Vue lexer (parser: vue)
++ add: support for Pug lexer (parser: pug)
++ add: support for Jade lexer (parser: pug, Jade is Pug's old name)
++ add: objectWrap option (preserve | collapse, v3.5.0+)
++ add: experimentalTernaries option (v3.1.0+, experimental)
++ add: rangeStart option (format from byte offset)
++ add: rangeEnd option (format to byte offset)
+* change: better config merge between defaults and user settings
+* change: always pass --no-color flag to Prettier (prevents ANSI codes in output)
+* change: simplified and optimized code structure
+* change: improved error handling and validation
+- fix: removed Sass lexer support (Prettier does not support .sass indented syntax, only .scss)
+
 2025.12.31
 initial version

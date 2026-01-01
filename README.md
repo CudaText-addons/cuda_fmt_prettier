@@ -2,13 +2,13 @@
 
 ## 🎯 What is Prettier?
 
-Prettier is an **opinionated code formatter** that enforces a consistent style across your entire codebase. It's the most popular code formatter in the JavaScript ecosystem and supports **19+ languages**:
+Prettier is an **opinionated code formatter** that enforces a consistent style across your entire codebase. It's the most popular code formatter in the JavaScript ecosystem and supports **22+ languages**:
 
 - ✅ JavaScript, JSX, TypeScript
 - ✅ JSON, YAML, GraphQL
-- ✅ CSS, SCSS, LESS, Sass
-- ✅ HTML, XML, Markdown
-- ✅ Handlebars, Laravel Blade, Django, Jinja2, Twig, Svelte
+- ✅ CSS, SCSS, LESS
+- ✅ HTML, XML, Markdown, MDX
+- ✅ Handlebars, Laravel Blade, Django, Jinja2, Twig, Svelte, Vue, Pug, Jade
 
 Used by **millions of projects** including React, Vue, Angular, Babel, Webpack, and countless others.
 
@@ -22,7 +22,7 @@ Used by **millions of projects** including React, Vue, Angular, Babel, Webpack, 
 - **NPM (recommended)**: `npm install -g prettier`
 - **Yarn**: `yarn global add prettier`
 - **Windows portable**: Download `prettier.exe` from [PackedPrettier](https://www.nuget.org/packages/PackedPrettier) → place in `CudaText/tools/Prettier` folder (requires .NET Runtime)
-- **Windows portable (Node-based)**: 
+- **Windows portable (Node-based)**:
   1. Install Node.js portable
   2. `npm install -g prettier`
   3. Copy `prettier.cmd` from `node_modules\.bin\` to `CudaText/tools/Prettier`
@@ -43,8 +43,8 @@ Prettier must be in system PATH, project node_modules, or `CudaText/tools/Pretti
 ### Advanced Features
 - 🎨 **Line state preservation** - Only modified lines marked as changed (thanks to cuda_fmt difflib support)
 - ↩️ **Single undo operation** - Format and undo with Ctrl+Z
-- 🎯 **19 languages** - Comprehensive language support
-- 📊 **Template engine support** - Formats Handlebars, Blade, Django, Jinja2, Twig, Svelte
+- 🎯 **22 languages** - Comprehensive language support
+- 📊 **Template engine support** - Formats Handlebars, Blade, Django, Jinja2, Twig, Svelte, Vue, Pug, Jade
 - 🔧 **Flexible configuration** - Use project .prettierrc or plugin inline options
 - 📝 **Debug logging** - Shows which executable and command used
 

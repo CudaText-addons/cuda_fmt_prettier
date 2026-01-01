@@ -5,6 +5,9 @@ import subprocess
 import json
 import shutil
 
+# Platform detection
+IS_WIN = os.name == 'nt'
+
 # Plugin loaded
 print("Prettier: Plugin initialized")
 
@@ -17,7 +20,7 @@ except ImportError:
 
 def _get_hidden_startupinfo():
     """Get startupinfo to hide console window on Windows."""
-    if os.name == 'nt':
+    if IS_WIN:
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         startupinfo.wShowWindow = subprocess.SW_HIDE
@@ -35,12 +38,12 @@ LEXER_TO_PARSER = {
     'CSS': 'css',
     'SCSS': 'scss',
     'LESS': 'less',
-    'Sass': 'scss',
 
     # Markup
     'HTML': 'html',
     'XML': 'html',
     'Markdown': 'markdown',
+    'MDX': 'mdx',
 
     # Data formats
     'JSON': 'json',
@@ -55,7 +58,10 @@ LEXER_TO_PARSER = {
     'HTML Django DTL': 'html',
     'Jinja2': 'html',
     'Twig': 'html',
-    'Svelte': 'html'
+    'Svelte': 'html',
+    'Vue': 'vue',
+    'Pug': 'pug',
+    'Jade': 'pug'
 }
 
 # Default configuration structure
@@ -123,27 +129,37 @@ DEFAULT_CONFIG = {
         'singleAttributePerLine': False,
         '// singleAttributePerLine': 'One attribute per line in HTML/JSX (default: false)',
 
+        'objectWrap': 'preserve',
+        '// objectWrap': 'Object wrap mode: preserve | collapse (default: preserve, v3.5.0+)',
+
+        'experimentalTernaries': False,
+        '// experimentalTernaries': 'Ternary formatting: false | true (default: false, v3.1.0+, experimental)',
+
         'insertPragma': False,
         '// insertPragma': 'Insert @format pragma (default: false)',
 
         'requirePragma': False,
-        '// requirePragma': 'Only format files with pragma (default: false)'
+        '// requirePragma': 'Only format files with pragma (default: false)',
+
+        'rangeStart': 0,
+        '// rangeStart': 'Format from byte offset (default: 0 = start of file)',
+
+        'rangeEnd': 'Infinity',
+        '// rangeEnd': 'Format to byte offset (default: Infinity = end of file)'
     }
 }
 
 def get_config_path():
     """Get configuration file path (portable-aware)."""
-    try:
-        import cudatext as ct
-        # Try cuda_fmt first
-        if config_path := get_config_filename('Prettier'):
-            return config_path
+    import cudatext as ct
 
-        # Fallback: build path manually
-        app_dir = ct.app_path(ct.APP_DIR_SETTINGS)
-        return os.path.join(app_dir, 'cuda_fmt_prettier.json')
-    except Exception:
-        return None
+    # Try cuda_fmt first
+    if config_path := get_config_filename('Prettier'):
+        return config_path
+
+    # Fallback: build path manually
+    app_dir = ct.app_path(ct.APP_DIR_SETTINGS)
+    return os.path.join(app_dir, 'cuda_fmt_prettier.json')
 
 def _filter_comments(config_dict):
     """Remove comment keys (starting with //) from config dict."""
@@ -214,31 +230,28 @@ def find_prettier_executable(config):
             return custom_path
 
     # 2. CudaText tools folder (portable-aware using APP_DIR_DATA)
-    try:
-        import cudatext as ct
-        app_dir = ct.app_path(ct.APP_DIR_DATA)
-        cudatext_root = os.path.dirname(app_dir)
-        tools_dir = os.path.join(cudatext_root, 'tools', 'Prettier')
+    import cudatext as ct
+    app_dir = ct.app_path(ct.APP_DIR_DATA)
+    cudatext_root = os.path.dirname(app_dir)
+    tools_dir = os.path.join(cudatext_root, 'tools', 'Prettier')
 
-        # Windows: try both .exe and .cmd
-        # Unix: try prettier
-        if os.name == 'nt':
-            for exe_name in ['prettier.exe', 'prettier.cmd']:
-                bundled = os.path.join(tools_dir, exe_name)
-                if os.path.isfile(bundled):
-                    print(f"Prettier: Using bundled version: {bundled}")
-                    return bundled
-        else:
-            bundled = os.path.join(tools_dir, 'prettier')
+    # Windows: try both .exe and .cmd
+    # Unix: try prettier
+    if IS_WIN:
+        for exe_name in ['prettier.exe', 'prettier.cmd']:
+            bundled = os.path.join(tools_dir, exe_name)
             if os.path.isfile(bundled):
                 print(f"Prettier: Using bundled version: {bundled}")
                 return bundled
-    except Exception:
-        pass
+    else:
+        bundled = os.path.join(tools_dir, 'prettier')
+        if os.path.isfile(bundled):
+            print(f"Prettier: Using bundled version: {bundled}")
+            return bundled
 
     # 3. Local project installation
     cwd = os.getcwd()
-    exe_suffix = '.cmd' if os.name == 'nt' else ''
+    exe_suffix = '.cmd' if IS_WIN else ''
     local_prettier = os.path.join(cwd, 'node_modules', '.bin', f'prettier{exe_suffix}')
 
     if os.path.isfile(local_prettier):
@@ -248,7 +261,7 @@ def find_prettier_executable(config):
     # 4. Package manager executors (space-separated for subprocess)
     package_managers = (
         ['npx.cmd prettier', 'yarn.cmd exec prettier', 'pnpm.cmd exec prettier', 'bunx.cmd prettier']
-        if os.name == 'nt' else
+        if IS_WIN else
         ['npx prettier', 'yarn exec prettier', 'pnpm exec prettier', 'bunx prettier']
     )
 
@@ -283,6 +296,7 @@ def build_prettier_command(prettier_path, parser, config):
 
     # Required parser argument
     cmd_parts.extend(['--parser', parser])
+    cmd_parts.append('--no-color')  # Disable ANSI color codes in output
 
     # Skip inline options if using project .prettierrc
     if config.get('use_prettier_config_file', True):
@@ -337,10 +351,20 @@ def build_prettier_command(prettier_path, parser, config):
     # Advanced options
     if options.get('singleAttributePerLine', False):
         cmd_parts.append('--single-attribute-per-line')
+    if 'objectWrap' in options:
+        cmd_parts.extend(['--object-wrap', options['objectWrap']])
+    if options.get('experimentalTernaries', False):
+        cmd_parts.append('--experimental-ternaries')
     if options.get('insertPragma', False):
         cmd_parts.append('--insert-pragma')
     if options.get('requirePragma', False):
         cmd_parts.append('--require-pragma')
+
+    # Range formatting (always explicit)
+    range_start = options.get('rangeStart')
+    range_end = options.get('rangeEnd')
+    cmd_parts.extend(['--range-start', str(0 if range_start is None else range_start)])
+    cmd_parts.extend(['--range-end', str('Infinity' if range_end is None else range_end)])
 
     print(f"Prettier: Command: {' '.join(cmd_parts)}")
     return cmd_parts
@@ -364,11 +388,8 @@ def do_format(text, lexer=''):
 
     # Auto-detect lexer if not provided (cuda_fmt may pass empty string)
     if not lexer:
-        try:
-            import cudatext as ct
-            lexer = ct.ed.get_prop(ct.PROP_LEXER_FILE)
-        except Exception:
-            pass
+        import cudatext as ct
+        lexer = ct.ed.get_prop(ct.PROP_LEXER_FILE)
 
     # Guard clause: unsupported lexer
     if not (parser := LEXER_TO_PARSER.get(lexer)):
@@ -490,16 +511,16 @@ class Command:
             "Prettier Formatter for CudaText\n\n"
             "FEATURES:\n"
             "- Auto-detection (PATH, bundled, or project node_modules)\n"
-            "- Support for 19 languages (JS, TS, JSON, CSS, HTML, templates, etc.)\n"
+            "- Support for 22 languages (JS, TS, JSON, CSS, HTML, templates, etc.)\n"
             "- Configurable options (17+ formatting rules)\n"
             "- Project .prettierrc support\n"
             "- Line state preservation (only modified lines marked)\n"
             "- Multi-platform (Windows, Linux, macOS)\n\n"
             "SUPPORTED LANGUAGES:\n"
             "JavaScript, JavaScript Babel (JSX), TypeScript, CSS, SCSS,\n"
-            "LESS, Sass, HTML, XML, Markdown, JSON, YAML, GraphQL,\n"
+            "LESS, HTML, XML, Markdown, MDX, JSON, YAML, GraphQL,\n"
             "HTML Handlebars, HTML Laravel Blade, HTML Django DTL,\n"
-            "Jinja2, Twig, Svelte\n\n"
+            "Jinja2, Twig, Svelte, Vue, Pug, Jade\n\n"
             "CONFIGURATION:\n"
             "Access via: Options > Settings-plugins > Prettier > Config\n"
             "- prettier_path: Custom path to Prettier executable\n"
@@ -529,5 +550,6 @@ class Command:
             f"{version_info}"
             "DOCUMENTATION:\n"
             "https://prettier.io/docs/",
-            ct.MB_OK
+            ct.MB_OK | ct.MB_ICONINFO,
+            "Prettier Help"
         )
