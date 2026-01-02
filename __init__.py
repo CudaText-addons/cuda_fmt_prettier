@@ -4,19 +4,14 @@ import os
 import subprocess
 import json
 import shutil
+import cudatext as ct
+from cuda_fmt import get_config_filename
 
 # Platform detection
 IS_WIN = os.name == 'nt'
 
 # Plugin loaded
 print("Prettier: Plugin initialized")
-
-try:
-    from cuda_fmt import get_config_filename
-except ImportError:
-    def get_config_filename(name):
-        """Fallback when cuda_fmt not available."""
-        return None
 
 def _get_hidden_startupinfo():
     """Get startupinfo to hide console window on Windows."""
@@ -151,7 +146,6 @@ DEFAULT_CONFIG = {
 
 def get_config_path():
     """Get configuration file path (portable-aware)."""
-    import cudatext as ct
 
     # Try cuda_fmt first
     if config_path := get_config_filename('Prettier'):
@@ -230,7 +224,6 @@ def find_prettier_executable(config):
             return custom_path
 
     # 2. CudaText tools folder (portable-aware using APP_DIR_DATA)
-    import cudatext as ct
     app_dir = ct.app_path(ct.APP_DIR_DATA)
     cudatext_root = os.path.dirname(app_dir)
     tools_dir = os.path.join(cudatext_root, 'tools', 'Prettier')
@@ -388,7 +381,6 @@ def do_format(text, lexer=''):
 
     # Auto-detect lexer if not provided (cuda_fmt may pass empty string)
     if not lexer:
-        import cudatext as ct
         lexer = ct.ed.get_prop(ct.PROP_LEXER_FILE)
 
     # Guard clause: unsupported lexer
@@ -467,7 +459,6 @@ class Command:
 
     def config(self):
         """Open configuration file in editor."""
-        import cudatext as ct
 
         config_path = get_config_path()
 
@@ -485,7 +476,6 @@ class Command:
 
     def help(self):
         """Display plugin help with version info."""
-        import cudatext as ct
 
         # Try to get Prettier version
         version_info = ""
