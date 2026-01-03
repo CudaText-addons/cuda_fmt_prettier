@@ -1,7 +1,6 @@
 2026.01.02
 * change: moved 'import cudatext as ct' to file top for PEP 8 compliance
 * change: removed try/except for get_config_filename import
-+ add: depends=cuda_fmt in install.inf to ensure framework is installed
 
 2026.01.01
 + add: support for MDX lexer (parser: mdx)
