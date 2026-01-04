@@ -14,9 +14,10 @@ Installation examples:
 - Windows portable (Node-based): Install Node.js portable, run 'npm install -g prettier', copy prettier.cmd from node_modules\.bin\ to tools/Prettier folder
 - Local project: npm install --save-dev prettier (auto-detected)
 
-Access configuration via menu: Options > Settings-plugins > Prettier > Config
 Access formatting via menu: Plugins > CudaFormatter > Formatter (menu)
-Access help via menu: Options > Settings-plugins > Prettier > Help
+Access global configuration via menu: Plugins > CudaFormatter > Configure formatter...
+Access local configuration via menu: Plugins > CudaFormatter > Configure formatter (local)...
+Access help via menu: Plugins > CudaFormatter > Formatter help...
 Hotkey (optional): Install 'Configure_Hotkeys' plugin, then search for "CudaFormatter: Formatter (menu)"
 
 Supported languages (22):

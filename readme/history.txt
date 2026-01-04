@@ -1,3 +1,6 @@
+2026.01.04
+* change: general code update to integrate seamlessly with new CudaFormatter standard
+
 2026.01.02
 * change: moved 'import cudatext as ct' to file top for PEP 8 compliance
 * change: removed try/except for get_config_filename import

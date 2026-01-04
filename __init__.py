@@ -407,6 +407,10 @@ def do_format(text, lexer=''):
         timeout = 10
 
     try:
+        # Get current file directory for .prettierrc discovery
+        current_file = ct.ed.get_filename()
+        cwd = os.path.dirname(current_file) if current_file else None
+
         # Execute Prettier via stdin/stdout
         process = subprocess.Popen(
             cmd,
@@ -414,6 +418,7 @@ def do_format(text, lexer=''):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            cwd=cwd,
             startupinfo=_get_hidden_startupinfo()
         )
 
@@ -473,6 +478,53 @@ class Command:
 
         # Open in editor
         ct.file_open(config_path)
+
+    def create_prettierrc(self):
+        """Create .prettierrc file in the directory of the current file."""
+
+        # Get current file path
+        current_file = ct.ed.get_filename()
+
+        # Guard clause: unsaved file (no directory to create .prettierrc in)
+        if not current_file:
+            ct.msg_box(
+                'Cannot create .prettierrc:\n\n'
+                'The current file has not been saved yet.\n'
+                'Please save the file first or open an existing file to determine its directory.',
+                ct.MB_OK | ct.MB_ICONWARNING
+            )
+            return
+
+        # Get directory and path
+        file_dir = os.path.dirname(current_file)
+        prettierrc_path = os.path.join(file_dir, '.prettierrc')
+
+        # Guard clause: already exists
+        if os.path.exists(prettierrc_path):
+            # Open in editor
+            ct.file_open(prettierrc_path)
+            return
+
+        # Get filtered prettier options (no comments)
+        import copy
+        prettierrc_config = _filter_comments(copy.deepcopy(DEFAULT_CONFIG['prettier_options']))
+
+        # Replace rangeEnd "Infinity" string with max int32 for .prettierrc compatibility
+        if 'rangeEnd' in prettierrc_config:
+            prettierrc_config['rangeEnd'] = 2147483647
+
+        # Create file
+        try:
+            with open(prettierrc_path, 'w', encoding='utf-8') as f:
+                json.dump(prettierrc_config, f, indent=2)
+
+            print(f"Prettier: Created .prettierrc: {prettierrc_path}")
+
+            # Open in editor
+            ct.file_open(prettierrc_path)
+
+        except Exception as e:
+            print(f"NOTE: Cannot create .prettierrc: {e}")
 
     def help(self):
         """Display plugin help with version info."""

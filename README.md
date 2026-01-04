@@ -58,8 +58,9 @@ Prettier must be in system PATH, project node_modules, or `CudaText/tools/Pretti
 
 ### Menu Commands
 - **Plugins > CudaFormatter > Formatter (menu)** - Format current file
-- **Options > Settings-plugins > Prettier > Config** - Configure options
-- **Options > Settings-plugins > Prettier > Help** - Show help
+- **Plugins > CudaFormatter > Configure formatter...** - Configure global options (cuda_fmt_prettier.json)
+- **Plugins > CudaFormatter > Configure formatter (local)...** - Configure local options (.prettierrc)
+- **Plugins > CudaFormatter > Formatter help...** - Show help
 
 ### Hotkey (Optional)
 1. Install **Configure_Hotkeys** plugin (via Addon Manager)

@@ -7,20 +7,11 @@ homepage=https://github.com/CudaText-addons/cuda_fmt_prettier
 author=Bruno Eduardo
 api=1.0.472
 
-[item1]
-section=commands
-caption=Prettier\Config
-method=config
-menu=o
-
-[item2]
-section=commands
-caption=Prettier\Help
-method=help
-menu=o
-
 [fmt1]
 caption=Prettier
 method=do_format
 lexers=JavaScript,JavaScript Babel,TypeScript,CSS,SCSS,LESS,HTML,XML,Markdown,MDX,JSON,YAML,GraphQL,HTML Handlebars,HTML Laravel Blade,HTML Django DTL,Jinja2,Twig,Svelte,Vue,Pug,Jade
 force_all=1
+config_global=config
+config_local=create_prettierrc
+help=help
