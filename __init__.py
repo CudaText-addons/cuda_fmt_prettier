@@ -7,11 +7,40 @@ import shutil
 import cudatext as ct
 from cuda_fmt import get_config_filename
 
+# Prettier version cache (populated on plugin load)
+_PRETTIER_VERSION_CACHE = None
+
+# Background process fetching version
+_VERSION_PROCESS = None
+
 # Platform detection
 IS_WIN = os.name == 'nt'
 
 # Plugin loaded
 print("Prettier: Plugin initialized")
+
+def _start_version_cache():
+    """Start background process to get Prettier version (non-blocking)."""
+    global _VERSION_PROCESS
+
+    try:
+        config = load_config()
+        prettier_path = find_prettier_executable(config)
+
+        if prettier_path:
+            cmd_parts = prettier_path.split() if ' ' in prettier_path else [prettier_path]
+
+            # Start process but DON'T wait (non-blocking!)
+            _VERSION_PROCESS = subprocess.Popen(
+                cmd_parts + ['--version'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                startupinfo=_get_hidden_startupinfo()
+            )
+            print("Prettier: Version check started in background")
+    except Exception as e:
+        print(f"NOTE: Could not start version check: {e}")
 
 def _get_hidden_startupinfo():
     """Get startupinfo to hide console window on Windows."""
@@ -503,6 +532,7 @@ class Command:
         if os.path.exists(prettierrc_path):
             # Open in editor
             ct.file_open(prettierrc_path)
+            ct.ed.set_prop(ct.PROP_LEXER_FILE, 'JSON')
             return
 
         # Get filtered prettier options (no comments)
@@ -522,35 +552,53 @@ class Command:
 
             # Open in editor
             ct.file_open(prettierrc_path)
+            ct.ed.set_prop(ct.PROP_LEXER_FILE, 'JSON')
 
         except Exception as e:
             print(f"NOTE: Cannot create .prettierrc: {e}")
 
     def help(self):
         """Display plugin help with version info."""
+        global _VERSION_PROCESS, _PRETTIER_VERSION_CACHE
 
-        # Try to get Prettier version
-        version_info = ""
-        config = load_config()
-        if prettier_path := find_prettier_executable(config):
-            try:
-                # Get version (handle both single executable and package manager)
-                cmd_parts = prettier_path.split() if ' ' in prettier_path else [prettier_path]
-                result = subprocess.run(
-                    cmd_parts + ['--version'],
-                    capture_output=True,
-                    timeout=3,
-                    text=True,
-                    startupinfo=_get_hidden_startupinfo()
-                )
-                if result.returncode == 0:
-                    version = result.stdout.strip()
-                    version_info = f"INSTALLED VERSION:\nPrettier {version}\n\n"
-            except Exception:
-                pass
+        # Start process on first help() call if not started yet
+        if _VERSION_PROCESS is None and _PRETTIER_VERSION_CACHE is None:
+            _start_version_cache()
 
-        ct.msg_box(
-            "Prettier Formatter for CudaText\n\n"
+        # Check if background version process finished
+        if _VERSION_PROCESS is not None and _PRETTIER_VERSION_CACHE is None:
+            # Process was started, check if finished
+            if _VERSION_PROCESS.poll() is not None:
+                # Process finished, get result
+                try:
+                    stdout, stderr = _VERSION_PROCESS.communicate(timeout=0.1)
+                    if _VERSION_PROCESS.returncode == 0:
+                        version = stdout.strip()
+                        _PRETTIER_VERSION_CACHE = f"INSTALLED VERSION:\nPrettier {version}\n\n"
+                        print(f"Prettier: Cached version {version}")
+                except Exception:
+                    pass
+                _VERSION_PROCESS = None
+            else:
+                # Process still running, wait for it
+                print("Prettier: Waiting for version check to complete...")
+                try:
+                    stdout, stderr = _VERSION_PROCESS.communicate(timeout=3)
+                    if _VERSION_PROCESS.returncode == 0:
+                        version = stdout.strip()
+                        _PRETTIER_VERSION_CACHE = f"INSTALLED VERSION:\nPrettier {version}\n\n"
+                        print(f"Prettier: Cached version {version}")
+                except Exception:
+                    pass
+                _VERSION_PROCESS = None
+
+        # Use cached version (if available)
+        version_info = _PRETTIER_VERSION_CACHE or ""
+
+        # Page 1: Features and basic info
+        result = ct.msg_box(
+            "Prettier Formatter for CudaText - Page 1/2\n\n"
+            f"{version_info}"
             "FEATURES:\n"
             "- Auto-detection (PATH, bundled, or project node_modules)\n"
             "- Support for 22 languages (JS, TS, JSON, CSS, HTML, templates, etc.)\n"
@@ -563,34 +611,42 @@ class Command:
             "LESS, HTML, XML, Markdown, MDX, JSON, YAML, GraphQL,\n"
             "HTML Handlebars, HTML Laravel Blade, HTML Django DTL,\n"
             "Jinja2, Twig, Svelte, Vue, Pug, Jade\n\n"
-            "CONFIGURATION:\n"
-            "Access via: Options > Settings-plugins > Prettier > Config\n"
-            "- prettier_path: Custom path to Prettier executable\n"
-            "- use_prettier_config_file: Use project .prettierrc (default: true)\n"
-            "- prettier_options: Inline formatting options (used when above is false)\n"
-            "- timeout_seconds: Subprocess timeout (default: 10)\n\n"
-            "PROJECT CONFIG (recommended):\n"
-            "Create .prettierrc in your project root with your preferred options.\n"
-            "Plugin will automatically use it when use_prettier_config_file=true\n\n"
-            "INSTALLATION METHODS:\n"
-            "1. NPM (recommended):\n"
-            "   npm install -g prettier\n"
-            "2. Local project:\n"
-            "   npm install --save-dev prettier\n"
-            "3. Windows portable (.NET-based):\n"
-            "   Download from nuget.org/packages/PackedPrettier\n"
-            "   Place prettier.exe in CudaText/tools/Prettier/ (requires .NET)\n"
-            "4. Windows portable (Node-based):\n"
-            "   Install Node.js portable, run npm install -g prettier\n"
-            "   Copy prettier.cmd to CudaText/tools/Prettier/\n"
-            "5. Package managers:\n"
-            "   yarn/pnpm/bun (auto-detected)\n\n"
-            "USAGE:\n"
-            "- Plugins > CudaFormatter > Formatter (menu)\n"
-            "- Hotkey (optional): Install 'Configure_Hotkeys' plugin,\n"
-            "  then search for 'CudaFormatter: Formatter (menu)'\n\n"
-            f"{version_info}"
-            "DOCUMENTATION:\n"
-            "https://prettier.io/docs/",
-            ct.MB_OK | ct.MB_ICONINFO
+            "_________________________________________________\n"
+            "[Click OK for configuration & installation info]",
+            ct.MB_OKCANCEL | ct.MB_ICONINFO
         )
+
+        # Page 2: Configuration and installation (only if user clicked OK)
+        if result == ct.ID_OK:
+            ct.msg_box(
+                "Prettier Formatter for CudaText - Page 2/2\n\n"
+                "CONFIGURATION:\n"
+                "Access via: Options > Settings-plugins > Prettier > Config\n"
+                "- prettier_path: Custom path to Prettier executable\n"
+                "- use_prettier_config_file: Use project .prettierrc (default: true)\n"
+                "- prettier_options: Inline formatting options (used when above is false)\n"
+                "- timeout_seconds: Subprocess timeout (default: 10)\n\n"
+                "PROJECT CONFIG (recommended):\n"
+                "Create .prettierrc in your project root with your preferred options.\n"
+                "Plugin will automatically use it when use_prettier_config_file=true\n\n"
+                "INSTALLATION METHODS:\n"
+                "1. NPM (recommended):\n"
+                "   npm install -g prettier\n"
+                "2. Local project:\n"
+                "   npm install --save-dev prettier\n"
+                "3. Windows portable (.NET-based):\n"
+                "   Download from nuget.org/packages/PackedPrettier\n"
+                "   Place prettier.exe in CudaText/tools/Prettier/ (requires .NET)\n"
+                "4. Windows portable (Node-based):\n"
+                "   Install Node.js portable, run npm install -g prettier\n"
+                "   Copy prettier.cmd to CudaText/tools/Prettier/\n"
+                "5. Package managers:\n"
+                "   yarn/pnpm/bun (auto-detected)\n\n"
+                "USAGE:\n"
+                "- Plugins > CudaFormatter > Formatter (menu)\n"
+                "- Hotkey (optional): Install 'Configure_Hotkeys' plugin,\n"
+                "  then search for 'CudaFormatter: Formatter (menu)'\n\n"
+                "DOCUMENTATION:\n"
+                "https://prettier.io/docs/",
+                ct.MB_OK | ct.MB_ICONINFO
+            )

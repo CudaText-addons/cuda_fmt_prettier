@@ -1,3 +1,8 @@
+2026.01.10
++ add: set JSON lexer after opening .prettierrc file for syntax highlighting
++ add: split help dialog into two pages for better screen fit (Page 1: features/languages, Page 2: config/installation)
+* change: version cache now lazy-loads on first help() call (first call has delay, subsequent calls use cache)
+
 2026.01.04
 * change: general code update to integrate seamlessly with new CudaFormatter standard
 
