@@ -1,3 +1,7 @@
+2026.01.20
++ add: sync_editor_tabs option to synchronize CudaText tab settings with Prettier tabWidth/useTabs after formatting
++ add: improved config comments with [!] markers for better visibility of use_prettier_config_file behavior
+
 2026.01.10
 + add: set JSON lexer after opening .prettierrc file for syntax highlighting
 + add: split help dialog into two pages for better screen fit (Page 1: features/languages, Page 2: config/installation)

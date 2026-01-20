@@ -96,10 +96,13 @@ DEFAULT_CONFIG = {
     'timeout_seconds': 10,
     '// timeout_seconds': 'Prettier subprocess timeout in seconds (default: 10)',
 
-    'use_prettier_config_file': True,
-    '// use_prettier_config_file': 'If true, uses .prettierrc from project. If false, uses options below',
+    'sync_editor_tabs': True,
+    '// sync_editor_tabs': 'Sync CudaText tab settings with Prettier tabWidth/useTabs (default: true)',
 
-    '// PRETTIER OPTIONS NOTE': 'https://prettier.io/docs/en/options.html (only used when use_prettier_config_file=false)',
+    'use_prettier_config_file': True,
+    '// use_prettier_config_file': '[!] IMPORTANT: If true (default), ignores prettier_options below and uses project .prettierrc. Set to false to use inline options',
+
+    '// [!] PRETTIER OPTIONS NOTE': 'These options ONLY work when use_prettier_config_file=false above! See: https://prettier.io/docs/en/options.html',
 
     'prettier_options': {
         'printWidth': 80,
@@ -470,6 +473,18 @@ def do_format(text, lexer=''):
         if not stdout:
             print('ERROR: Prettier returned empty output')
             return None
+
+        # Sync editor tab settings with Prettier config
+        if config.get('sync_editor_tabs', True):
+            prettier_options = config.get('prettier_options', {})
+
+            if 'tabWidth' in prettier_options:
+                ct.ed.set_prop(ct.PROP_TAB_SIZE, prettier_options['tabWidth'])
+
+            if 'useTabs' in prettier_options:
+                # useTabs=True -> use real tabs (PROP_TAB_SPACES=False)
+                # useTabs=False -> convert tabs to spaces (PROP_TAB_SPACES=True)
+                ct.ed.set_prop(ct.PROP_TAB_SPACES, not prettier_options['useTabs'])
 
         # Return formatted text
         # cuda_fmt will automatically preserve line states using difflib
